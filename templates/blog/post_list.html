@@ -1,0 +1,37 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    <h1>Blog Posts</h1>
+    
+    <div class="post-list">
+        {% for post in posts %}
+            <div class="post-item">
+                <h2>{{ post.title }}</h2>
+                <p><strong>Category:</strong> {{ post.category.name }}</p>
+                <p><strong>Created on:</strong> {{ post.created_at }}</p>
+
+                {% if post.main_image %}
+                    <div class="main-image">
+                        <img src="{{ post.main_image.url }}" alt="Main Image for {{ post.title }}">
+                    </div>
+                {% endif %}
+
+                {% if post.secondary_image %}
+                    <div class="secondary-image">
+                        <img src="{{ post.secondary_image.url }}" alt="Secondary Image for {{ post.title }}">
+                    </div>
+                {% endif %}
+
+                <div class="other-images">
+                    {% for image in post.other_images.all %}
+                        <img src="/{{ image.image.url }}" alt="{{ image.caption }}">
+                    {% endfor %}
+                </div>
+
+                <p>{{ post.content|slice:":200" }}...</p> <!-- Display first 200 chars of content -->
+
+                <a href="">Read more</a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

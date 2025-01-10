@@ -1,46 +1,57 @@
 from rest_framework import serializers
-from blog.models import CustomUser, Post, PostImage, Comment, Reply, Tag, Category
+from django.contrib.auth.models import User
+from ..models import Post, Category, Tag, Comment, CommentReply, Image
 
-
-class UserSerializer(serializers.ModelSerializer):
+# Category Serializer
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser
-        fields = ['id', 'username', 'email', 'profile_picture', 'bio']
+        model = Category
+        fields = ['id', 'name', 'image', 'description']
 
-
-class PostImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PostImage
-        fields = ['id', 'image_type', 'image']
-
-
-class PostSerializer(serializers.ModelSerializer):
-    images = PostImageSerializer(many=True)
-
-    class Meta:
-        model = Post
-        fields = ['id', 'user', 'title', 'content', 'created_at', 'slug', 'images', 'categories', 'tags']
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ['id', 'post', 'user', 'content', 'created_at']
-
-
-class ReplySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Reply
-        fields = ['id', 'comment', 'user', 'content', 'created_at']
-
-
+# Tag Serializer
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ['id', 'name']
 
-
-class CategorySerializer(serializers.ModelSerializer):
+# Image Serializer (for other images in posts)
+class ImageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
-        fields = ['id', 'name', 'description', 'image']
+        model = Image
+        fields = ['id', 'image', 'caption']
+
+# Post Serializer
+class PostSerializer(serializers.ModelSerializer):
+    category = CategorySerializer()
+    tags = TagSerializer(many=True)
+    main_image = serializers.ImageField(required=False)
+    secondary_image = serializers.ImageField(required=False)
+    other_images = ImageSerializer(many=True, required=False)
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'slug', 'content', 'category', 'created_at', 'updated_at', 'tags', 'main_image', 'secondary_image', 'other_images']
+
+# Comment Serializer
+class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()  # Showing the username
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'user', 'content', 'created_at']
+
+# CommentReply Serializer
+class CommentReplySerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()  # Showing the username
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
+    class Meta:
+        model = CommentReply
+        fields = ['id', 'user', 'content', 'created_at']
+
+# User Profile Serializer (For updating the user's profile picture)
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'profile_picture']
