@@ -11,11 +11,11 @@ class UserSerializer(serializers.ModelSerializer):
 class PostImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostImage
-        fields = ['id', 'image_type', 'image_url']
+        fields = ['id', 'image_type', 'image']
 
 
 class PostSerializer(serializers.ModelSerializer):
-    images = PostImageSerializer(many=True, read_only=True)
+    images = PostImageSerializer(many=True)
 
     class Meta:
         model = Post
