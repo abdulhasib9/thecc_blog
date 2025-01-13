@@ -14,7 +14,7 @@ import CategoryList from "../components/CategoryList.jsx";
 import ArticleList from "../components/ArticleList.jsx";
 import CopilotInput from "../components/CopilotInput.jsx";
 
-
+import Posts from "../components/Posts.jsx";
 
 
 
@@ -22,14 +22,14 @@ import CopilotInput from "../components/CopilotInput.jsx";
 
 export default function Blog(props) {
 
-    const [articles, setArticles] = useState([]);
-
-    useEffect(() => {
-        fetch('http://127.0.0.1:8000/api/articles/')
-            .then(res => res.json())
-            .then(data => setArticles(data))
-            .catch(error => console.log('Error fetching articles:', error));
-    }, []);
+    // const [articles, setArticles] = useState([]);
+    //
+    // useEffect(() => {
+    //     fetch('http://127.0.0.1:8000/api/articles/')
+    //         .then(res => res.json())
+    //         .then(data => setArticles(data))
+    //         .catch(error => console.log('Error fetching articles:', error));
+    // }, []);
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
@@ -42,9 +42,10 @@ export default function Blog(props) {
           {/*<ImageSlider />*/}
           {/*<Custom />*/}
         <MainContent />
+
           <CategoryList />
-          {/*<ArticleList />*/}
-          <CopilotInput />
+         <Posts/>
+          {/*<CopilotInput />*/}
         {/*<Latest />*/}
       </Container>
       <Footer />

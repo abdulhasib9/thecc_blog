@@ -14,5 +14,5 @@ router.register(r'user-profile', UserProfileViewSet)
 
 urlpatterns = [
     path('api/', include(router.urls)),  # Base API path
-path('test/', views.post_list, name='post_list'),
+    path('test/', views.post_list, name='post_list'),
 ]

@@ -2,11 +2,13 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from ..models import Post, Category, Tag, Comment, CommentReply, Image
 
+
 # Category Serializer
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'image', 'description']
+
 
 # Tag Serializer
 class TagSerializer(serializers.ModelSerializer):
@@ -14,11 +16,13 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ['id', 'name']
 
+
 # Image Serializer (for other images in posts)
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ['id', 'image', 'caption']
+
 
 # Post Serializer
 class PostSerializer(serializers.ModelSerializer):
@@ -30,7 +34,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'slug', 'content', 'category', 'created_at', 'updated_at', 'tags', 'main_image', 'secondary_image', 'other_images']
+        fields = ['id', 'title', 'slug', 'content', 'category', 'created_at', 'updated_at', 'tags', 'main_image',
+                  'secondary_image', 'other_images']
+
 
 # Comment Serializer
 class CommentSerializer(serializers.ModelSerializer):
@@ -41,6 +47,7 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'user', 'content', 'created_at']
 
+
 # CommentReply Serializer
 class CommentReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()  # Showing the username
@@ -49,6 +56,7 @@ class CommentReplySerializer(serializers.ModelSerializer):
     class Meta:
         model = CommentReply
         fields = ['id', 'user', 'content', 'created_at']
+
 
 # User Profile Serializer (For updating the user's profile picture)
 class UserProfileSerializer(serializers.ModelSerializer):

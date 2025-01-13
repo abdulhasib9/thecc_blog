@@ -2,16 +2,30 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 
+
 class Category(models.Model):
     """
     Represents a category for blog posts with an image.
     """
     name = models.CharField(max_length=255, unique=True)
-    image = models.ImageField(upload_to="category_images/",blank=True,null=True)
+    image = models.ImageField(upload_to="category_images/", blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
+
+
+class SubCategory(models.Model):
+    """
+    Represents a subcategory for blog posts that belongs to a category.
+    """
+    name = models.CharField(max_length=255, unique=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subcategories")
+    image = models.ImageField(upload_to="subcategory_images/", blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.category.name} - {self.name}"
 
 
 class Tag(models.Model):
@@ -32,6 +46,7 @@ class Post(models.Model):
     slug = models.SlugField(unique=True, blank=True)  # Slug for the URL
     content = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="posts")
+    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name="posts", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     tags = models.ManyToManyField(Tag, related_name="posts", blank=True)
@@ -61,54 +76,6 @@ class Post(models.Model):
         return self.title
 
 
-# class Post(models.Model):
-#     """
-#     Represents a blog post with a slug, multiple images, and tags.
-#     """
-#     title = models.CharField(max_length=255)
-#     slug = models.SlugField(unique=True, blank=True)  # Slug for the URL
-#     content = models.TextField()
-#     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="posts")
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     tags = models.ManyToManyField(Tag, related_name="posts", blank=True)
-#     main_image = models.ImageField(upload_to='post_images/main/%Y/%m/%d/', null=True, blank=True)
-#     secondary_image = models.ImageField(upload_to='post_images/secondary/%Y/%m/%d/', null=True, blank=True)
-#     other_images = models.ManyToManyField('Image', related_name="posts", blank=True)
-#
-#     def save(self, *args, **kwargs):
-#         if not self.slug:
-#             self.slug = slugify(self.title)  # Automatically generate a slug from the title
-#         super(Post, self).save(*args, **kwargs)
-#
-#     def __str__(self):
-#         return self.title
-
-
-# class Post(models.Model):
-#     """
-#     Represents a blog post with a slug, multiple images, and tags.
-#     """
-#     title = models.CharField(max_length=255)
-#     slug = models.SlugField(unique=True, blank=True)  # Slug for the URL
-#     content = models.TextField()
-#     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="posts")
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     tags = models.ManyToManyField(Tag, related_name="posts", blank=True)
-#     main_image = models.ImageField(upload_to="post_images/main/", null=True, blank=True)
-#     secondary_image = models.ImageField(upload_to="post_images/secondary/", null=True, blank=True)
-#     other_images = models.ManyToManyField('Image', related_name="posts", blank=True)
-#
-#     def save(self, *args, **kwargs):
-#         if not self.slug:
-#             self.slug = slugify(self.title)  # Automatically generate a slug from the title
-#         super(Post, self).save(*args, **kwargs)
-#
-#     def __str__(self):
-#         return self.title
-#
-
 class Comment(models.Model):
     """
     Represents a comment on a post.
@@ -133,26 +100,6 @@ class CommentReply(models.Model):
 
     def __str__(self):
         return f"Reply by {self.user.username} on Comment ID {self.comment.id}"
-
-
-# class Image(models.Model):
-#     """
-#     Represents an image that can be associated with a post.
-#     """
-#     image = models.ImageField(upload_to="post_images/other/")
-#     caption = models.CharField(max_length=255, blank=True)
-#
-#     def __str__(self):
-#         return f"Image - {self.caption if self.caption else 'No Caption'}"
-# class Image(models.Model):
-#     """
-#     Represents an image that can be associated with a post.
-#     """
-#     image = models.ImageField(upload_to='post_images/other/%Y/%m/%d/', null=True, blank=True)
-#     caption = models.CharField(max_length=255, blank=True)
-#
-#     def __str__(self):
-#         return f"Image - {self.caption if self.caption else 'No Caption'}"
 
 
 class Image(models.Model):

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from ..models import Post, Category, Tag, Comment, CommentReply, User
 from .serializers import PostSerializer, CategorySerializer, TagSerializer, CommentSerializer, CommentReplySerializer, \
     UserProfileSerializer
@@ -14,16 +14,11 @@ def post_list(request):
     return render(request, 'blog/post_list.html', {'posts': posts})
 
 
-
-
-
-
-
 # Category ViewSet
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]  # Make sure the user is authenticated
+    permission_classes = [IsAuthenticatedOrReadOnly]  # Make sure the user is authenticated
 
 
 # Tag ViewSet
@@ -37,14 +32,14 @@ class TagViewSet(viewsets.ModelViewSet):
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 # Comment ViewSet
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 # CommentReply ViewSet
