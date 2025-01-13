@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from ..models import Post, Category, Tag, Comment, CommentReply, Image, SubCategory, Lesson, CodeSnippet
+from ..models import Post, Category, Tag, Comment, CommentReply, Image, SubCategory, Lesson, CodeSnippet, Menu, MenuItem
 
 
 # Category Serializer
@@ -36,6 +36,29 @@ class CodeSnippetSerializer(serializers.ModelSerializer):
     class Meta:
         model = CodeSnippet
         fields = ['id', 'code', 'language', 'description']
+
+
+# Menu Serializer
+class MenuSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Menu
+        fields = ['id', 'name', 'description']
+
+
+# MenuItem Serializer
+class MenuItemSerializer(serializers.ModelSerializer):
+    sub_menu_items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MenuItem
+        fields = ['id', 'menu', 'title', 'slug', 'parent', 'url', 'order', 'sub_menu_items']
+
+    def get_sub_menu_items(self, obj):
+        """
+        Returns serialized sub menu items.
+        """
+        sub_menu_items = obj.sub_menu_items.all()
+        return MenuItemSerializer(sub_menu_items, many=True).data
 
 
 # Post Serializer
