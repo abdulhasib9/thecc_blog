@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from ..models import Post, Category, Tag, Comment, CommentReply, Image, SubCategory
+from ..models import Post, Category, Tag, Comment, CommentReply, Image, SubCategory, Lesson, CodeSnippet
 
 
 # Category Serializer
@@ -24,11 +24,18 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
-# Image Serializer (for other images in posts)
+# Image Serializer (for other images in posts or lessons)
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ['id', 'image', 'caption']
+
+
+# CodeSnippet Serializer
+class CodeSnippetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeSnippet
+        fields = ['id', 'code', 'language', 'description']
 
 
 # Post Serializer
@@ -38,11 +45,22 @@ class PostSerializer(serializers.ModelSerializer):
     main_image = serializers.ImageField(required=False)
     secondary_image = serializers.ImageField(required=False)
     other_images = ImageSerializer(many=True, required=False)
+    code_snippets = CodeSnippetSerializer(many=True, required=False)
 
     class Meta:
         model = Post
         fields = ['id', 'title', 'slug', 'content', 'category', 'created_at', 'updated_at', 'tags', 'main_image',
-                  'secondary_image', 'other_images']
+                  'secondary_image', 'other_images', 'urls', 'code_snippets']
+
+
+# Lesson Serializer
+class LessonSerializer(serializers.ModelSerializer):
+    images = ImageSerializer(many=True, required=False)
+    code_snippets = CodeSnippetSerializer(many=True, required=False)
+
+    class Meta:
+        model = Lesson
+        fields = ['id', 'title', 'subject', 'content', 'order', 'urls', 'images', 'code_snippets']
 
 
 # Comment Serializer

@@ -58,6 +58,9 @@ class Lesson(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="lessons")
     content = models.TextField()
     order = models.IntegerField()
+    urls = models.JSONField(blank=True, null=True)  # To store multiple URLs as a JSON array
+    images = models.ManyToManyField('Image', related_name="lessons", blank=True)  # Linking to the Image model
+    code_snippets = models.ManyToManyField('CodeSnippet', related_name="lessons", blank=True)  # Linking to the CodeSnippet model
 
     def __str__(self):
         return f"{self.order}. {self.title}"
@@ -89,7 +92,9 @@ class Post(models.Model):
     tags = models.ManyToManyField(Tag, related_name="posts", blank=True)
     main_image = models.ImageField(upload_to='post_images/main/', null=True, blank=True)
     secondary_image = models.ImageField(upload_to='post_images/secondary/', null=True, blank=True)
-    other_images = models.ManyToManyField('Image', related_name="posts", blank=True)
+    other_images = models.ManyToManyField('Image', related_name="posts", blank=True)  # Linking to the Image model
+    urls = models.JSONField(blank=True, null=True)  # To store multiple URLs as a JSON array
+    code_snippets = models.ManyToManyField('CodeSnippet', related_name="posts", blank=True)  # Linking to the CodeSnippet model
 
     def image_upload_to(self, filename):
         # Generate dynamic upload path based on the post title
@@ -141,25 +146,41 @@ class CommentReply(models.Model):
         return f"Reply by {self.user.username} on Comment ID {self.comment.id}"
 
 
-# Model to represent an Image that can be associated with a Post
+# Model to represent an Image that can be associated with a Post or Lesson
 class Image(models.Model):
     """
-    Represents an image that can be associated with a post.
+    Represents an image that can be associated with a post or lesson.
     """
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_images", blank=True, null=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="lesson_images", blank=True, null=True)
     image = models.ImageField(upload_to='images/', null=True, blank=True)
     caption = models.CharField(max_length=255, blank=True)
 
     def image_upload_to(self, filename):
         # Generate dynamic upload path based on the associated post's title
-        title_prefix = slugify(self.post.title)  # Slugify title for a safe file name
+        title_prefix = slugify(self.post.title if self.post else self.lesson.title)  # Slugify title for a safe file name
         return f"post_images/{title_prefix}/{filename}"
 
     def save(self, *args, **kwargs):
-        # Update the upload_to for images based on the associated post title
+        # Update the upload_to for images based on the associated post or lesson title
         if self.image:
             self.image.upload_to = self.image_upload_to(self.image.name)
         super(Image, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"Image - {self.caption if self.caption else 'No Caption'}"
+
+
+# Model to represent a Code Snippet that can be associated with a Post or Lesson
+class CodeSnippet(models.Model):
+    """
+    Represents a code snippet that can be associated with a post or lesson.
+    """
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_code_snippets", blank=True, null=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="lesson_code_snippets", blank=True, null=True)
+    code = models.TextField()
+    language = models.CharField(max_length=50)  # Language of the code snippet (e.g., 'Python', 'JavaScript')
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"CodeSnippet in {self.language} - {self.description[:30]}..." if self.description else f"CodeSnippet in {self.language}"
