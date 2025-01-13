@@ -2,6 +2,38 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 
+
+class Menu(models.Model):
+    """
+    Represents a menu that contains multiple menu items.
+    """
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class MenuItem(models.Model):
+    """
+    Represents a menu item, which can be a top-level menu item or a sub-menu item.
+    """
+    menu = models.ForeignKey(Menu, on_delete=models.CASCADE, related_name='menu_items')
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True, blank=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='sub_menu_items', blank=True, null=True)
+    url = models.CharField(max_length=255, blank=True, null=True)
+    order = models.IntegerField()
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(MenuItem, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+
 # Model to represent a Category for blog posts
 class Category(models.Model):
     """
@@ -37,7 +69,8 @@ class Subject(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subjects", blank=True, null=True)
-    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name="subjects", blank=True, null=True)
+    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name="subjects", blank=True,
+                                    null=True)
     description = models.TextField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
@@ -60,7 +93,8 @@ class Lesson(models.Model):
     order = models.IntegerField()
     urls = models.JSONField(blank=True, null=True)  # To store multiple URLs as a JSON array
     images = models.ManyToManyField('Image', related_name="lessons", blank=True)  # Linking to the Image model
-    code_snippets = models.ManyToManyField('CodeSnippet', related_name="lessons", blank=True)  # Linking to the CodeSnippet model
+    code_snippets = models.ManyToManyField('CodeSnippet', related_name="lessons",
+                                           blank=True)  # Linking to the CodeSnippet model
 
     def __str__(self):
         return f"{self.order}. {self.title}"
@@ -94,7 +128,8 @@ class Post(models.Model):
     secondary_image = models.ImageField(upload_to='post_images/secondary/', null=True, blank=True)
     other_images = models.ManyToManyField('Image', related_name="posts", blank=True)  # Linking to the Image model
     urls = models.JSONField(blank=True, null=True)  # To store multiple URLs as a JSON array
-    code_snippets = models.ManyToManyField('CodeSnippet', related_name="posts", blank=True)  # Linking to the CodeSnippet model
+    code_snippets = models.ManyToManyField('CodeSnippet', related_name="posts",
+                                           blank=True)  # Linking to the CodeSnippet model
 
     def image_upload_to(self, filename):
         # Generate dynamic upload path based on the post title
@@ -158,7 +193,8 @@ class Image(models.Model):
 
     def image_upload_to(self, filename):
         # Generate dynamic upload path based on the associated post's title
-        title_prefix = slugify(self.post.title if self.post else self.lesson.title)  # Slugify title for a safe file name
+        title_prefix = slugify(
+            self.post.title if self.post else self.lesson.title)  # Slugify title for a safe file name
         return f"post_images/{title_prefix}/{filename}"
 
     def save(self, *args, **kwargs):
@@ -177,7 +213,8 @@ class CodeSnippet(models.Model):
     Represents a code snippet that can be associated with a post or lesson.
     """
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_code_snippets", blank=True, null=True)
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="lesson_code_snippets", blank=True, null=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="lesson_code_snippets", blank=True,
+                               null=True)
     code = models.TextField()
     language = models.CharField(max_length=50)  # Language of the code snippet (e.g., 'Python', 'JavaScript')
     description = models.TextField(blank=True, null=True)
