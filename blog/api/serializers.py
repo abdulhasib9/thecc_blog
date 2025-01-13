@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from ..models import Post, Category, Tag, Comment, CommentReply, Image
+from ..models import Post, Category, Tag, Comment, CommentReply, Image, SubCategory
 
 
 # Category Serializer
@@ -8,6 +8,13 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'image', 'description']
+
+
+# SubCategory Serializer
+class SubCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubCategory
+        fields = ['id', 'name', 'category']
 
 
 # Tag Serializer

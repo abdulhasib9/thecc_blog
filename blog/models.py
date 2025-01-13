@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 
-
+# Model to represent a Category for blog posts
 class Category(models.Model):
     """
     Represents a category for blog posts with an image.
@@ -15,6 +15,7 @@ class Category(models.Model):
         return self.name
 
 
+# Model to represent a SubCategory belonging to a Category
 class SubCategory(models.Model):
     """
     Represents a subcategory for blog posts that belongs to a category.
@@ -28,6 +29,41 @@ class SubCategory(models.Model):
         return f"{self.category.name} - {self.name}"
 
 
+# Model to represent a Subject that belongs to either a Category or a SubCategory
+class Subject(models.Model):
+    """
+    Represents a subject that can belong to either a category or a subcategory.
+    """
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subjects", blank=True, null=True)
+    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name="subjects", blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(Subject, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+
+# Model to represent a Lesson within a Subject
+class Lesson(models.Model):
+    """
+    Represents a lesson within a subject.
+    """
+    title = models.CharField(max_length=255)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="lessons")
+    content = models.TextField()
+    order = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.order}. {self.title}"
+
+
+# Model to represent a Tag that can be associated with a Post
 class Tag(models.Model):
     """
     Represents a tag that can be associated with a post.
@@ -38,6 +74,7 @@ class Tag(models.Model):
         return self.name
 
 
+# Model to represent a Blog Post
 class Post(models.Model):
     """
     Represents a blog post with a slug, multiple images, and tags.
@@ -76,6 +113,7 @@ class Post(models.Model):
         return self.title
 
 
+# Model to represent a Comment on a Post
 class Comment(models.Model):
     """
     Represents a comment on a post.
@@ -89,6 +127,7 @@ class Comment(models.Model):
         return f"Comment by {self.user.username} on {self.post.title}"
 
 
+# Model to represent a Reply to a Comment
 class CommentReply(models.Model):
     """
     Represents a reply to a comment.
@@ -102,6 +141,7 @@ class CommentReply(models.Model):
         return f"Reply by {self.user.username} on Comment ID {self.comment.id}"
 
 
+# Model to represent an Image that can be associated with a Post
 class Image(models.Model):
     """
     Represents an image that can be associated with a post.
