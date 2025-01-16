@@ -13,7 +13,6 @@ import {Category} from "@mui/icons-material";
 import CategoryList from "../components/CategoryList.jsx";
 import ArticleList from "../components/ArticleList.jsx";
 import CopilotInput from "../components/CopilotInput.jsx";
-import MainMenu from "../components/MainMenu.jsx";
 
 
 
@@ -21,9 +20,16 @@ import MainMenu from "../components/MainMenu.jsx";
 
 
 
-export default function Blog(props) {
+export default function Base(props) {
 
+    const [articles, setArticles] = useState([]);
 
+    useEffect(() => {
+        fetch('http://127.0.0.1:8000/blog/api/posts')
+            .then(res => res.json())
+            .then(data => setArticles(data))
+            .catch(error => console.log('Error fetching articles:', error));
+    }, []);
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
@@ -33,9 +39,6 @@ export default function Blog(props) {
         component="main"
         sx={{ display: 'flex', flexDirection: 'column', my: 16, gap: 4 }}
       >
-
-
-          <MainMenu />
          
       </Container>
       <Footer />

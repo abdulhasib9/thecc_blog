@@ -1,79 +1,98 @@
-from django.shortcuts import render
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
-from ..models import Post, Category, SubCategory, Tag, Comment, CommentReply, User, Lesson, CodeSnippet
-from .serializers import PostSerializer, CategorySerializer, SubCategorySerializer, TagSerializer, CommentSerializer, CommentReplySerializer, UserProfileSerializer, LessonSerializer, CodeSnippetSerializer
-
-
-def post_list(request):
-    # Fetch all posts from the database
-    posts = Post.objects.all()
-
-    # Render the template with the list of posts
-    return render(request, 'blog/post_list.html', {'posts': posts})
-
+from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from ..models import Category, Subject, ContentBlock, Lesson, Post, Tag, Comment, CommentReply, Menu, MenuItem
+from .serializers import CategorySerializer, SubjectSerializer, ContentBlockSerializer, LessonSerializer, PostSerializer, TagSerializer, CommentSerializer, CommentReplySerializer, MenuSerializer, MenuItemSerializer
 
 # Category ViewSet
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]  # Make sure the user is authenticated
 
+# Subject ViewSet
+class SubjectViewSet(viewsets.ModelViewSet):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
 
-# SubCategory ViewSet
-class SubCategoryViewSet(viewsets.ModelViewSet):
-    queryset = SubCategory.objects.all()
-    serializer_class = SubCategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-
-# Tag ViewSet
-class TagViewSet(viewsets.ModelViewSet):
-    queryset = Tag.objects.all()
-    serializer_class = TagSerializer
-    permission_classes = [IsAuthenticated]
-
-
-# Post ViewSet
-class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all().order_by('-created_at')
-    serializer_class = PostSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
+# ContentBlock ViewSet
+class ContentBlockViewSet(viewsets.ModelViewSet):
+    queryset = ContentBlock.objects.all()
+    serializer_class = ContentBlockSerializer
 
 # Lesson ViewSet
 class LessonViewSet(viewsets.ModelViewSet):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
 
+# Post ViewSet
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
 
-# CodeSnippet ViewSet
-class CodeSnippetViewSet(viewsets.ModelViewSet):
-    queryset = CodeSnippet.objects.all()
-    serializer_class = CodeSnippetSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
+# Tag ViewSet
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
 
 # Comment ViewSet
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
 
 # CommentReply ViewSet
 class CommentReplyViewSet(viewsets.ModelViewSet):
     queryset = CommentReply.objects.all()
     serializer_class = CommentReplySerializer
-    permission_classes = [IsAuthenticated]
+
+# Menu ViewSet
+class MenuViewSet(viewsets.ModelViewSet):
+    queryset = Menu.objects.all()
+    serializer_class = MenuSerializer
+
+# MenuItem ViewSet
+# views.py
 
 
-# User Profile ViewSet (for updating user profile)
-class UserProfileViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
+class MenuViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing Menu instances.
+    """
+    queryset = Menu.objects.all()
+    serializer_class = MenuSerializer
 
-    def get_queryset(self):
-        return User.objects.filter(id=self.request.user.id)  # Only allow updating the logged-in user's profile
+
+class MenuItemViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing MenuItem instances.
+    """
+    queryset = MenuItem.objects.all()
+    serializer_class = MenuItemSerializer
+
+
+@api_view(['GET'])
+def get_menu_with_items(request, menu_slug):
+    """
+    Fetch the menu by its slug and return the menu along with its menu items.
+    """
+    try:
+        menu = Menu.objects.get(slug=menu_slug)
+        serializer = MenuSerializer(menu)
+        return Response(serializer.data)
+    except Menu.DoesNotExist:
+        return Response({"error": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+def get_menu_items(request, menu_slug):
+    """
+    Fetch the menu items for a specific menu identified by its slug.
+    """
+    try:
+        menu = Menu.objects.get(slug=menu_slug)
+        menu_items = menu.menu_items.all()
+        serializer = MenuItemSerializer(menu_items, many=True)
+        return Response(serializer.data)
+    except Menu.DoesNotExist:
+        return Response({"error": "Menu not found"}, status=status.HTTP_404_NOT_FOUND)

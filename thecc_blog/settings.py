@@ -64,7 +64,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'thecc_blog.wsgi.application'
 
 CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5176']  # React frontend URL
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5175']  # React frontend URL
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

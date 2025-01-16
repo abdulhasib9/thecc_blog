@@ -3,74 +3,51 @@ from django.contrib.auth.models import User
 from django.utils.text import slugify
 
 
-class Menu(models.Model):
+class Category(models.Model):
     """
-    Represents a menu that contains multiple menu items.
+    Represents a category for subjects and posts.
     """
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-
-class MenuItem(models.Model):
-    """
-    Represents a menu item, which can be a top-level menu item or a sub-menu item.
-    """
-    menu = models.ForeignKey(Menu, on_delete=models.CASCADE, related_name='menu_items')
-    title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='category_images/', blank=True, null=True)  # Add image field
     slug = models.SlugField(unique=True, blank=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='sub_menu_items', blank=True, null=True)
-    url = models.CharField(max_length=255, blank=True, null=True)
-    order = models.IntegerField()
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title)
-        super(MenuItem, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return self.title
-
-
-# Model to represent a Category for blog posts
-class Category(models.Model):
-    """
-    Represents a category for blog posts with an image.
-    """
-    name = models.CharField(max_length=255, unique=True)
-    image = models.ImageField(upload_to="category_images/", blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
+            self.slug = slugify(self.name)
+        super(Category, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
 
-# Model to represent a SubCategory belonging to a Category
 class SubCategory(models.Model):
     """
-    Represents a subcategory for blog posts that belongs to a category.
+    Represents a subcategory that belongs to a category.
     """
     name = models.CharField(max_length=255, unique=True)
+    slug = models.SlugField(unique=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subcategories")
-    image = models.ImageField(upload_to="subcategory_images/", blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='subcategory_images/', blank=True, null=True)  # Add image field
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super(SubCategory, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.category.name} - {self.name}"
+        return self.name
 
 
-# Model to represent a Subject that belongs to either a Category or a SubCategory
 class Subject(models.Model):
     """
-    Represents a subject that can belong to either a category or a subcategory.
+    Represents a subject that belongs to a category.
     """
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subjects", blank=True, null=True)
-    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name="subjects", blank=True,
-                                    null=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subjects")
+    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name="subjects", blank=True, null=True)  # Optional subcategory field
     description = models.TextField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
@@ -82,25 +59,71 @@ class Subject(models.Model):
         return self.title
 
 
-# Model to represent a Lesson within a Subject
+class ContentBlock(models.Model):
+    """
+    Represents a content block that can be used in lessons or posts (text, images, code snippets).
+    """
+    TEXT = 'text'
+    IMAGE = 'image'
+    CODE = 'code'
+    CONTENT_TYPES = [
+        (TEXT, 'Text'),
+        (IMAGE, 'Image'),
+        (CODE, 'Code Snippet'),
+    ]
+
+    content_type = models.CharField(max_length=10, choices=CONTENT_TYPES)
+    content = models.TextField(blank=True, null=True)  # For text and code content
+    image = models.ImageField(upload_to='content_images/', blank=True, null=True)  # For image content
+    code_language = models.CharField(max_length=50, blank=True, null=True)  # For code content (e.g., Python)
+    order = models.IntegerField(default=0)  # To control the order of content blocks
+
+    def __str__(self):
+        return f"Content Block: {self.content_type} - Order: {self.order}"
+
+
 class Lesson(models.Model):
     """
     Represents a lesson within a subject.
     """
     title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True, blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="lessons")
-    content = models.TextField()
     order = models.IntegerField()
-    urls = models.JSONField(blank=True, null=True)  # To store multiple URLs as a JSON array
-    images = models.ManyToManyField('Image', related_name="lessons", blank=True)  # Linking to the Image model
-    code_snippets = models.ManyToManyField('CodeSnippet', related_name="lessons",
-                                           blank=True)  # Linking to the CodeSnippet model
+    content_blocks = models.ManyToManyField(ContentBlock, related_name="lessons", blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(Lesson, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.order}. {self.title}"
 
 
-# Model to represent a Tag that can be associated with a Post
+class Post(models.Model):
+    """
+    Represents a blog post that can be linked to a category and have multiple content blocks.
+    """
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True, blank=True)
+    content = models.TextField()  # Main content for the post (optional since we use content blocks)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="posts")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    content_blocks = models.ManyToManyField(ContentBlock, related_name="posts", blank=True)
+    main_image = models.ImageField(upload_to='post_images/', null=True, blank=True)
+    secondary_image = models.ImageField(upload_to='post_images/', null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(Post, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+
 class Tag(models.Model):
     """
     Represents a tag that can be associated with a post.
@@ -111,49 +134,6 @@ class Tag(models.Model):
         return self.name
 
 
-# Model to represent a Blog Post
-class Post(models.Model):
-    """
-    Represents a blog post with a slug, multiple images, and tags.
-    """
-    title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, blank=True)  # Slug for the URL
-    content = models.TextField()
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="posts")
-    subcategory = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name="posts", blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    tags = models.ManyToManyField(Tag, related_name="posts", blank=True)
-    main_image = models.ImageField(upload_to='post_images/main/', null=True, blank=True)
-    secondary_image = models.ImageField(upload_to='post_images/secondary/', null=True, blank=True)
-    other_images = models.ManyToManyField('Image', related_name="posts", blank=True)  # Linking to the Image model
-    urls = models.JSONField(blank=True, null=True)  # To store multiple URLs as a JSON array
-    code_snippets = models.ManyToManyField('CodeSnippet', related_name="posts",
-                                           blank=True)  # Linking to the CodeSnippet model
-
-    def image_upload_to(self, filename):
-        # Generate dynamic upload path based on the post title
-        title_prefix = slugify(self.title)  # Slugify title for a safe file name
-        return f"post_images/{title_prefix}/{filename}"
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)  # Automatically generate a slug from the title
-
-        # Update the upload_to for images based on the post title
-        if self.main_image:
-            self.main_image.upload_to = self.image_upload_to(self.main_image.name)
-        if self.secondary_image:
-            self.secondary_image.upload_to = self.image_upload_to(self.secondary_image.name)
-
-        # Saving the post
-        super(Post, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return self.title
-
-
-# Model to represent a Comment on a Post
 class Comment(models.Model):
     """
     Represents a comment on a post.
@@ -167,7 +147,6 @@ class Comment(models.Model):
         return f"Comment by {self.user.username} on {self.post.title}"
 
 
-# Model to represent a Reply to a Comment
 class CommentReply(models.Model):
     """
     Represents a reply to a comment.
@@ -181,43 +160,77 @@ class CommentReply(models.Model):
         return f"Reply by {self.user.username} on Comment ID {self.comment.id}"
 
 
-# Model to represent an Image that can be associated with a Post or Lesson
-class Image(models.Model):
+class Menu(models.Model):
     """
-    Represents an image that can be associated with a post or lesson.
+    Represents a menu that contains multiple menu items.
     """
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_images", blank=True, null=True)
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="lesson_images", blank=True, null=True)
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
-    caption = models.CharField(max_length=255, blank=True)
-
-    def image_upload_to(self, filename):
-        # Generate dynamic upload path based on the associated post's title
-        title_prefix = slugify(
-            self.post.title if self.post else self.lesson.title)  # Slugify title for a safe file name
-        return f"post_images/{title_prefix}/{filename}"
-
-    def save(self, *args, **kwargs):
-        # Update the upload_to for images based on the associated post or lesson title
-        if self.image:
-            self.image.upload_to = self.image_upload_to(self.image.name)
-        super(Image, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Image - {self.caption if self.caption else 'No Caption'}"
-
-
-# Model to represent a Code Snippet that can be associated with a Post or Lesson
-class CodeSnippet(models.Model):
-    """
-    Represents a code snippet that can be associated with a post or lesson.
-    """
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_code_snippets", blank=True, null=True)
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="lesson_code_snippets", blank=True,
-                               null=True)
-    code = models.TextField()
-    language = models.CharField(max_length=50)  # Language of the code snippet (e.g., 'Python', 'JavaScript')
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"CodeSnippet in {self.language} - {self.description[:30]}..." if self.description else f"CodeSnippet in {self.language}"
+        return self.name
+
+
+
+class Menu(models.Model):
+    """
+    Represents a menu, which can have multiple menu items.
+    """
+    name = models.CharField(max_length=255, unique=True)
+    slug = models.SlugField(unique=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super(Menu, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class MenuItem(models.Model):
+    """
+    Represents a menu item, which can be a top-level menu item or a sub-menu item.
+    """
+    menu = models.ForeignKey(Menu, on_delete=models.CASCADE, related_name='menu_items')
+    title = models.CharField(max_length=255)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='sub_menu_items', blank=True, null=True)
+    url = models.CharField(max_length=255, blank=True, null=True)
+    order = models.IntegerField()
+
+    def __str__(self):
+        return self.title
+
+
+
+
+
+# class Menu(models.Model):
+#     """
+#     Represents a navigation menu.
+#     """
+#     name = models.CharField(max_length=255)
+#     slug = models.SlugField(unique=True, blank=True)
+#     description = models.TextField(blank=True, null=True)
+#
+#     def save(self, *args, **kwargs):
+#         if not self.slug:
+#             self.slug = slugify(self.name)
+#         super(Menu, self).save(*args, **kwargs)
+#
+#     def __str__(self):
+#         return self.name
+#
+#
+# class MenuItem(models.Model):
+#     """
+#     Represents an item in a navigation menu.
+#     """
+#     menu = models.ForeignKey(Menu, on_delete=models.CASCADE, related_name="menu_items")
+#     title = models.CharField(max_length=255)
+#     link = models.CharField(max_length=200)
+#     order = models.IntegerField(default=0)
+#     parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name="sub_items", blank=True, null=True)
+#
+#     def __str__(self):
+#         return self.title

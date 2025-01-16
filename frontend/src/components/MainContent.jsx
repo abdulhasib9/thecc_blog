@@ -196,7 +196,7 @@ export default function MainContent() {
     const [articles, setArticles] = useState([]);
 
     useEffect(() => {
-        fetch('http://127.0.0.1:8000/api/articles/')
+        fetch('http://127.0.0.1:8000/blog/api/posts/')
             .then(res => res.json())
             .then(data => setArticles(data))
             .catch(error => console.log('Error fetching articles:', error));
