@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,12 +10,13 @@ from .serializers import CategorySerializer, SubjectSerializer, ContentBlockSeri
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 # Subject ViewSet
 class SubjectViewSet(viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
-
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 # ContentBlock ViewSet
 class ContentBlockViewSet(viewsets.ModelViewSet):
     queryset = ContentBlock.objects.all()
